@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "StructUtils/InstancedStruct.h"
+#include "StructUtils/PropertyBag.h"
 #include "GameplayResourcesDeveloperSettings.generated.h"
 
 USTRUCT()
@@ -17,8 +17,15 @@ struct FGameplayResourceEntry : public FTableRowBase
 	FText Description;
 #endif
 
+	// If true, the values authored in Resources seed this key's runtime value at startup.
+	// Otherwise the resource starts unset and the authored values are ignored.
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UScriptStruct> ResourceType;
+	bool bSetAsDefault = false;
+
+	// The set of named, typed variables this resource key may contain (schema).
+	// Values are only used when bSetAsDefault is true.
+	UPROPERTY(EditAnywhere)
+	FInstancedPropertyBag Resources;
 };
 
 /**
@@ -36,24 +43,22 @@ public:
 	// Can be accessed by UPROPERTY(meta = (GetOptions = "GameplayResources.GameplayResourcesDeveloperSettings.GetKeys"))
 	UFUNCTION()
 	static TArray<FName> GetKeys();
-	
-	static UScriptStruct* FindValueStruct(FName Key);
-	
+
+	// Schema (property bag layout) declared for a key, used to build node pins. Null if unknown.
+	static const UPropertyBag* FindResourceSchema(FName Key);
+
+	// The authored bag for a key (schema + values). Returns nullptr if the key is unknown.
+	static const FInstancedPropertyBag* FindResourceBag(FName Key);
+
 	UPROPERTY(Config, EditAnywhere, Category = "Gameplay Resources", meta = (RequiredAssetDataTags = "RowStructure=/Script/GameplayResources.GameplayResourceEntry"))
 	TSoftObjectPtr<UDataTable> GlobalResourcesDataTable;
-	
-	UPROPERTY(Config, EditAnywhere, Category = "Gameplay Resources", meta = (GetKeyOptions = "GetKeys"))
-	TMap<FName, FInstancedStruct> DefaultValues;
-	
+
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Config, EditAnywhere, Category = "Gameplay Resources")
 	bool bDisplayNodeDescription = true;
 #endif
-	
+
 #if WITH_EDITOR
-	
-	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
-	
 	static FString GetDescription(FName Key);
 #endif
 };

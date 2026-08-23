@@ -20,40 +20,28 @@ TArray<FName> UGameplayResourcesDeveloperSettings::GetKeys()
 	return Table->GetRowNames();
 }
 
-UScriptStruct* UGameplayResourcesDeveloperSettings::FindValueStruct(FName Key)
+const FInstancedPropertyBag* UGameplayResourcesDeveloperSettings::FindResourceBag(FName Key)
 {
 	if (const UDataTable* DT = GetDataTable())
 	{
 		if (const FGameplayResourceEntry* Row = DT->FindRow<FGameplayResourceEntry>(Key, TEXT("Temp")))
 		{
-			return Row->ResourceType;
+			return &Row->Resources;
 		}
 	}
 	return nullptr;
 }
 
-#if WITH_EDITOR
-void UGameplayResourcesDeveloperSettings::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent)
+const UPropertyBag* UGameplayResourcesDeveloperSettings::FindResourceSchema(FName Key)
 {
-	Super::PostEditChangeChainProperty(PropertyChangedEvent);
-	
-	const FName MemberPropertyName = PropertyChangedEvent.PropertyChain.GetActiveMemberNode()->GetValue()->GetFName();
-	
-	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UGameplayResourcesDeveloperSettings, DefaultValues))
+	if (const FInstancedPropertyBag* Bag = FindResourceBag(Key))
 	{
-		for (TTuple<FName, FInstancedStruct>& Value : DefaultValues)
-		{
-			if (const UScriptStruct* TargetStructType = FindValueStruct(Value.Key))
-			{
-				if (TargetStructType != Value.Value.GetScriptStruct())
-				{
-					Value.Value.InitializeAs(TargetStructType);
-				}
-			}
-		}
+		return Bag->GetPropertyBagStruct();
 	}
+	return nullptr;
 }
 
+#if WITH_EDITOR
 FString UGameplayResourcesDeveloperSettings::GetDescription(FName Key)
 {
 	FString OutDescription{TEXT("No Description")};

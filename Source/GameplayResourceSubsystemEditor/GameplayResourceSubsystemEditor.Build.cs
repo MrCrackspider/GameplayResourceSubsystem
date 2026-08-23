@@ -24,7 +24,9 @@ public class GameplayResourceSubsystemEditor : ModuleRules
                 "BlueprintGraph",
                 "KismetCompiler",
                 "UnrealEd",
-                "GraphEditor"
+                "GraphEditor",
+                "StructUtilsEditor",
+                "PropertyEditor"
             }
         );
     }

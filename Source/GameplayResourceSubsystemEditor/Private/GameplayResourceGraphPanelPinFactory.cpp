@@ -11,9 +11,15 @@ TSharedPtr<class SGraphPin> FGameplayResourceGraphPanelPinFactory::CreatePin(cla
 	{
 		return nullptr;
 	}
-	
+
+	// Only the Key pin gets the DataTable row-name dropdown; bag properties may also be Name-typed.
+	if (InPin->PinName != TEXT("Key"))
+	{
+		return nullptr;
+	}
+
 	UObject* Outer = InPin->GetOuter();
-	if (!Outer->IsA(UK2Node_GlobalResourceAccessor::StaticClass()))
+	if (!Outer->IsA(UK2Node_ResourceAccessorBase::StaticClass()))
 	{
 		return nullptr;
 	}

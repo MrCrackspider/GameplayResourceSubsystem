@@ -10,6 +10,10 @@ class FGameplayResourceSubsystemEditorModule : public IModuleInterface
 public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
-    
+
     TSharedPtr<FGameplayResourceGraphPanelPinFactory> GameplayResourceGraphPanelPinFactory;
+
+private:
+    void RegisterPropertyCustomizations();
+    void UnregisterPropertyCustomizations();
 };

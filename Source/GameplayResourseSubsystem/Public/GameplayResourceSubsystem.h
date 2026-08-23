@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameplayResourcesDeveloperSettings.h"
 #include "UObject/UnrealType.h"
-#include "StructUtils/InstancedStruct.h"
-#include "Runtime/Engine/Public/Subsystems/WorldSubsystem.h"
+#include "StructUtils/PropertyBag.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "GameplayResourceSubsystem.generated.h"
 
 USTRUCT(BlueprintType)
@@ -25,74 +25,51 @@ class GAMEPLAYRESOURCES_API UGameplayResourceSubsystem : public UGameInstanceSub
 public:
 	
 	static UGameplayResourceSubsystem* Get(const UObject* WorldContext);
-	
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	
-	template<typename T>
-	const T* GetValue(FName Key) const;
-	
-	template<typename T>
-	bool SetValue(FName Key, const T* Value) const;
-	
-	const FInstancedStruct* GetAsInstancedStruct(FName Key) const;
-	
-	bool SetValue(FName Key, const FInstancedStruct& InValue);
-	
+
+	// True when the key currently holds a runtime value (either seeded as default or set at runtime).
+	bool HasResource(FName Key) const;
+
+	// Runtime bag for a key, or nullptr when the resource is currently unset.
+	const FInstancedPropertyBag* FindRuntimeBag(FName Key) const;
+
+	// Sets a key's runtime value from an external bag, copying matching properties onto the schema.
+	void SetResourceBag(FName Key, const FInstancedPropertyBag& InBag);
+
+	// Removes a key's runtime value (back to "unset"). Re-seeds the default if the row is a default.
 	void ResetValue(FName Key);
-	
+
+	// BlueprintPure accessor used by the Get node's "Found" output pin.
+	UFUNCTION(BlueprintPure, meta = (DefaultToSelf = "WorldContext"))
+	static bool HasGlobalResource(const UObject* WorldContext, UPARAM(meta = (GetOptions = "GameplayResources.GameplayResourcesDeveloperSettings.GetKeys")) FName Key);
+
 	UFUNCTION(BlueprintCallable, meta = (DefaultToSelf = "WorldContext", WorldContex = "WorldContext"))
 	static void ResetGlobalResource(const UObject* WorldContext, UPARAM(meta = (GetOptions = "GameplayResources.GameplayResourcesDeveloperSettings.GetKeys")) FName Key);
-	
+
+	// Reads a single named property out of a resource key's runtime bag into the wildcard Value pin.
+	// Value is left zero-initialized when the key is unset or the property is missing.
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "Value", BlueprintInternalUseOnly = "true", DefaultToSelf = "WorldContext"))
-	static void BPGetValue(const UObject* WorldContext, FName Key, int32& Value);
-	
-	DECLARE_FUNCTION(execBPGetValue);
-	
+	static void BPGetProperty(const UObject* WorldContext, FName Key, FName PropertyName, int32& Value);
+
+	DECLARE_FUNCTION(execBPGetProperty);
+
+	// Writes the wildcard Value pin into a single named property of a resource key's runtime bag,
+	// creating the runtime bag from the key's schema (default-initialized) if it did not exist yet.
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "Value", BlueprintInternalUseOnly = "true", DefaultToSelf = "WorldContext"))
-	static void BPSetValue(const UObject* WorldContext, FName Key, const int32& Value);
-	
-	DECLARE_FUNCTION(execBPSetValue);
-	
+	static void BPSetProperty(const UObject* WorldContext, FName Key, FName PropertyName, const int32& Value);
+
+	DECLARE_FUNCTION(execBPSetProperty);
+
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnValueUpdated, FName)
-	
+
 	FOnValueUpdated OnValueUpdated;
 
 private:
-	
-	TMap<FName, FInstancedStruct> Values;
+
+	// Ensures a runtime bag exists for Key, creating a default-initialized one from the schema.
+	// Returns nullptr if the key has no declared schema.
+	FInstancedPropertyBag* FindOrCreateRuntimeBag(FName Key);
+
+	TMap<FName, FInstancedPropertyBag> Values;
 };
-
-template <typename T>
-const T* UGameplayResourceSubsystem::GetValue(FName Key) const
-{
-	static_assert(TIsDerivedFrom<T, UStruct>::IsDerived, "T must be a UStruct type");
-
-	const FInstancedStruct* Found = GetAsInstancedStruct(Key);
-	if (!Found)
-	{
-		return nullptr;
-	}
-
-	const UScriptStruct* ExpectedStruct = Found->GetScriptStruct();
-	const UScriptStruct* ActualStruct = T::StaticStruct(); 
-
-	if (ActualStruct != ExpectedStruct)
-	{
-		return nullptr;
-	}
-
-	return Found->GetPtr<T>();
-}
-
-template <typename T>
-bool UGameplayResourceSubsystem::SetValue(FName Key, const T* Value) const
-{
-	static_assert(TIsDerivedFrom<T, UStruct>::IsDerived, "T must be a UStruct type");
-
-	if (Value == nullptr || Key.IsNone())
-	{
-		return false;
-	}
-	
-	return SetValue(Key, FInstancedStruct::Make<T>(*Value));
-}
