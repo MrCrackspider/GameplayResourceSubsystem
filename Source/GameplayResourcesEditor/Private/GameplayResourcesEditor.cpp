@@ -1,15 +1,15 @@
-#include "GameplayResourceSubsystemEditor.h"
+#include "GameplayResourcesEditor.h"
 
 #include "EdGraphUtilities.h"
 #include "GameplayResourceCustomization.h"
 #include "GameplayResourceGraphPanelPinFactory.h"
 #include "PropertyEditorModule.h"
 
-#define LOCTEXT_NAMESPACE "FGameplayResourceSubsystemEditorModule"
+#define LOCTEXT_NAMESPACE "FGameplayResourcesEditorModule"
 
 static const FName GameplayResourceStructName(TEXT("GameplayResource"));
 
-void FGameplayResourceSubsystemEditorModule::StartupModule()
+void FGameplayResourcesEditorModule::StartupModule()
 {
 	GameplayResourceGraphPanelPinFactory = MakeShareable(new FGameplayResourceGraphPanelPinFactory());
 	FEdGraphUtilities::RegisterVisualPinFactory(GameplayResourceGraphPanelPinFactory);
@@ -17,7 +17,7 @@ void FGameplayResourceSubsystemEditorModule::StartupModule()
 	RegisterPropertyCustomizations();
 }
 
-void FGameplayResourceSubsystemEditorModule::ShutdownModule()
+void FGameplayResourcesEditorModule::ShutdownModule()
 {
 	if (GameplayResourceGraphPanelPinFactory.IsValid())
 	{
@@ -27,7 +27,7 @@ void FGameplayResourceSubsystemEditorModule::ShutdownModule()
 	UnregisterPropertyCustomizations();
 }
 
-void FGameplayResourceSubsystemEditorModule::RegisterPropertyCustomizations()
+void FGameplayResourcesEditorModule::RegisterPropertyCustomizations()
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomPropertyTypeLayout(
@@ -36,7 +36,7 @@ void FGameplayResourceSubsystemEditorModule::RegisterPropertyCustomizations()
 	PropertyModule.NotifyCustomizationModuleChanged();
 }
 
-void FGameplayResourceSubsystemEditorModule::UnregisterPropertyCustomizations()
+void FGameplayResourcesEditorModule::UnregisterPropertyCustomizations()
 {
 	if (FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
@@ -47,4 +47,4 @@ void FGameplayResourceSubsystemEditorModule::UnregisterPropertyCustomizations()
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FGameplayResourceSubsystemEditorModule, GameplayResourceSubsystemEditor)
+IMPLEMENT_MODULE(FGameplayResourcesEditorModule, GameplayResourcesEditor)

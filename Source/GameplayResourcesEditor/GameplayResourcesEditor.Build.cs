@@ -1,8 +1,8 @@
 ﻿using UnrealBuildTool;
 
-public class GameplayResourceSubsystemEditor : ModuleRules
+public class GameplayResourcesEditor : ModuleRules
 {
-    public GameplayResourceSubsystemEditor(ReadOnlyTargetRules Target) : base(Target)
+    public GameplayResourcesEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 

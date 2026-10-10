@@ -1,5 +1,3 @@
-// © Volga Studios. All rights reserved.
-
 
 #include "K2Node_GlobalResourceAccessor.h"
 

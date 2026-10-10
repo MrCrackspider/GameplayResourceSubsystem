@@ -1,4 +1,3 @@
-// © Volga Studios. All rights reserved.
 
 #pragma once
 
@@ -16,7 +15,7 @@ class FCompilerResultsLog;
  * and the per-property accessor function the node expands into.
  */
 UCLASS(Abstract)
-class GAMEPLAYRESOURCESUBSYSTEMEDITOR_API UK2Node_ResourceAccessorBase : public UK2Node
+class GAMEPLAYRESOURCESEDITOR_API UK2Node_ResourceAccessorBase : public UK2Node
 {
 	GENERATED_BODY()
 

@@ -1,5 +1,3 @@
-// © Volga Studios. All rights reserved.
-
 
 #include "GameplayResourceFunctionLibrary.h"
 

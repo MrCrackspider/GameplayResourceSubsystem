@@ -5,7 +5,7 @@
 
 class FGameplayResourceGraphPanelPinFactory;
 
-class FGameplayResourceSubsystemEditorModule : public IModuleInterface
+class FGameplayResourcesEditorModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;

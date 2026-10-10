@@ -1,4 +1,3 @@
-// © Volga Studios. All rights reserved.
 
 #pragma once
 

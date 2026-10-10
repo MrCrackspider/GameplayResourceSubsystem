@@ -8,5 +8,5 @@ class SGraphPin;
 
 class FGameplayResourceGraphPanelPinFactory: public FGraphPanelPinFactory
 {
-	GAMEPLAYRESOURCESUBSYSTEMEDITOR_API virtual TSharedPtr<class SGraphPin> CreatePin(class UEdGraphPin* InPin) const override;
+	GAMEPLAYRESOURCESEDITOR_API virtual TSharedPtr<class SGraphPin> CreatePin(class UEdGraphPin* InPin) const override;
 };

@@ -1,4 +1,3 @@
-// © Volga Studios. All rights reserved.
 
 #pragma once
 
@@ -10,8 +9,7 @@
  * A self-contained, editable copy of a gameplay resource.
  *
  * Holds a Key (restricted to the keys declared in the Global Resources DataTable) and a property bag
- * whose layout mirrors the schema declared for that Key. The bag's values are freely editable, and the
- * bag re-shapes itself to the declared schema whenever the Key changes in the editor.
+ * whose layout mirrors the schema declared for that Key.
  */
 USTRUCT(BlueprintType)
 struct GAMEPLAYRESOURCES_API FGameplayResource
@@ -21,8 +19,7 @@ struct GAMEPLAYRESOURCES_API FGameplayResource
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Resource", meta = (GetOptions = "GameplayResources.GameplayResourcesDeveloperSettings.GetKeys"))
 	FName Key;
 
-	// Editable in the details panel; not directly Blueprint-exposed (property bags aren't a BP-native
-	// type). Blueprint access goes through the Get/Set Gameplay Resource nodes.
+	// Editable in the details panel; Blueprint access goes through the Get/Set Gameplay Resource nodes.
 	UPROPERTY(EditAnywhere, Category = "Gameplay Resource", meta = (FixedLayout))
 	FInstancedPropertyBag Bag;
 

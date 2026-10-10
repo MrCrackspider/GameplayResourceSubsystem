@@ -1,6 +1,4 @@
-﻿// © Volga Studios. All rights reserved.
-
-
+﻿
 #include "GameplayResourcesDeveloperSettings.h"
 
 UDataTable* UGameplayResourcesDeveloperSettings::GetDataTable()

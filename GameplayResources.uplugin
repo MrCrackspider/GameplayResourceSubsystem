@@ -21,7 +21,7 @@
 			"LoadingPhase": "Default"
 		}, 
 		{
-			"Name": "GameplayResourceSubsystemEditor",
+			"Name": "GameplayResourcesEditor",
 			"Type": "UncookedOnly",
 			"LoadingPhase": "Default"
 		}
