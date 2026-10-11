@@ -254,24 +254,24 @@ void UK2Node_ResourceAccessorBase::GetResourcePins(TArray<UEdGraphPin*>& OutPins
 	OutPins.Reset();
 	for (UEdGraphPin* Pin : Pins)
 	{
-		if (Pin == nullptr || Pin->ParentPin != nullptr)
-		{
-			continue;
-		}
-
-		const FName PinName = Pin->PinName;
-		if (PinName == UEdGraphSchema_K2::PN_Execute
-			|| PinName == UEdGraphSchema_K2::PN_Then
-			|| PinName == UEdGraphSchema_K2::PN_Self
-			|| PinName == FK2Node_ResourceAccessorHelper::KeyPinName
-			|| PinName == FK2Node_ResourceAccessorHelper::FoundPinName
-			|| PinName == FK2Node_ResourceAccessorHelper::ResourcePinName)
+		if (Pin == nullptr || Pin->ParentPin != nullptr || IsFixedPin(*Pin))
 		{
 			continue;
 		}
 
 		OutPins.Add(Pin);
 	}
+}
+
+bool UK2Node_ResourceAccessorBase::IsFixedPin(const UEdGraphPin& Pin) const
+{
+	const FName PinName = Pin.PinName;
+	return PinName == UEdGraphSchema_K2::PN_Execute
+		|| PinName == UEdGraphSchema_K2::PN_Then
+		|| PinName == UEdGraphSchema_K2::PN_Self
+		|| PinName == FK2Node_ResourceAccessorHelper::KeyPinName
+		|| PinName == FK2Node_ResourceAccessorHelper::FoundPinName
+		|| PinName == FK2Node_ResourceAccessorHelper::ResourcePinName;
 }
 
 bool UK2Node_ResourceAccessorBase::SyncResourcePins()

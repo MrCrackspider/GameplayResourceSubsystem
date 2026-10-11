@@ -38,8 +38,12 @@ protected:
 	UEdGraphPin* GetKeyPin() const;
 	UEdGraphPin* GetFoundPin() const;
 
-	// Collects the current per-property value pins (excludes the fixed exec/self/key/found/resource pins).
+	// Collects the current per-property value pins (every top-level pin IsFixedPin rejects).
 	void GetResourcePins(TArray<UEdGraphPin*>& OutPins) const;
+
+	// True for pins the node always has (exec/self/key/found/resource and any subclass extras), as opposed to
+	// the per-property pins generated from the schema. Subclasses adding fixed pins must extend this.
+	virtual bool IsFixedPin(const UEdGraphPin& Pin) const;
 
 	// Rebuilds the per-property value pins from whichever schema key is currently resolvable.
 	// Returns true when the set of property pins actually changed.

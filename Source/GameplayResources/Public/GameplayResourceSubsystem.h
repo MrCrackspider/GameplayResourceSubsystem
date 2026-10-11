@@ -18,14 +18,16 @@ struct FGlobalResourceReference
 };
 
 // Kinds of change a resource listener can subscribe to. Combine as a mask when registering;
-// a broadcast always carries exactly one flag.
+// a broadcast always carries exactly one flag. Reflected so Blueprint can show it as a bitmask pin
+// (the values are the mask bits, hence UseEnumValuesAsMaskValuesInEditor).
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EGameplayResourceChangeType : uint8
 {
-	None    = 0,
+	None    = 0 UMETA(Hidden),
 	Added   = 1 << 0, // Key went from unset to set. Resource is the new value.
 	Changed = 1 << 1, // Key was already set and was written again. Resource is the new value.
 	Removed = 1 << 2, // Key went from set to unset. Resource is the value that was removed.
-	All     = Added | Changed | Removed
+	All     = 0x7 UMETA(Hidden) // Added | Changed | Removed; spelled as a literal for UHT.
 };
 ENUM_CLASS_FLAGS(EGameplayResourceChangeType)
 
