@@ -71,7 +71,6 @@ void UK2Node_OnGlobalResourceChanged::AllocateExtraFixedPins()
 	OnChangedPin->PinFriendlyName = LOCTEXT("OnChangedPinName", "On Changed");
 
 	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Byte, StaticEnum<EGameplayResourceChangeType>(), ChangeTypePinName);
-	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Struct, FGameplayResource::StaticStruct(), ResourcePinName);
 }
 
 bool UK2Node_OnGlobalResourceChanged::IsFixedPin(const UEdGraphPin& Pin) const
@@ -101,11 +100,6 @@ UEdGraphPin* UK2Node_OnGlobalResourceChanged::GetOnChangedPin() const
 UEdGraphPin* UK2Node_OnGlobalResourceChanged::GetChangeTypePin() const
 {
 	return FindPin(ChangeTypePinName);
-}
-
-UEdGraphPin* UK2Node_OnGlobalResourceChanged::GetResourcePin() const
-{
-	return FindPin(ResourcePinName);
 }
 
 UEdGraphPin* UK2Node_OnGlobalResourceChanged::GetAsyncActionPin() const
@@ -192,9 +186,9 @@ void UK2Node_OnGlobalResourceChanged::ExpandNode(FKismetCompilerContext& Compile
 	CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), *RememberListener->GetThenPin());
 
 	// On Changed: the delegate's outputs, then one read per connected property pin from the delivered snapshot.
+	// The snapshot itself isn't exposed; the property pins are the node's view of it.
 	UEdGraphPin* AsyncResourcePin = AsyncNode->FindPinChecked(ResourcePinName);
 	CompilerContext.MovePinLinksToIntermediate(*GetChangeTypePin(), *AsyncNode->FindPinChecked(ChangeTypePinName));
-	CompilerContext.MovePinLinksToIntermediate(*GetResourcePin(), *AsyncResourcePin);
 
 	UEdGraphPin* LastThenPin = AsyncNode->FindPinChecked(GET_MEMBER_NAME_CHECKED(UAsyncAction_ListenForGlobalResourceChange, OnResourceChanged));
 

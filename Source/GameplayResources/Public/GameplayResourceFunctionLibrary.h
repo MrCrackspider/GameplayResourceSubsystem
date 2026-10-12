@@ -25,6 +25,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Resource", meta = (DefaultToSelf = "WorldContext"))
 	static bool ExportGameplayResource(const UObject* WorldContext, const FGameplayResource& Resource);
 
+	// True when both have the same Key and equal values, matching properties by ID (FGameplayResource::operator==).
+	UFUNCTION(BlueprintPure, Category = "Gameplay Resource", meta = (DisplayName = "Equal (Gameplay Resource)", CompactNodeTitle = "==", Keywords = "== equal"))
+	static bool EqualEqual_GameplayResource(const FGameplayResource& A, const FGameplayResource& B);
+
+	UFUNCTION(BlueprintPure, Category = "Gameplay Resource", meta = (DisplayName = "Not Equal (Gameplay Resource)", CompactNodeTitle = "!=", Keywords = "!= not equal"))
+	static bool NotEqual_GameplayResource(const FGameplayResource& A, const FGameplayResource& B);
+
 	// Reads a single named property from Resource.Bag into the wildcard Value pin.
 	UFUNCTION(BlueprintCallable, CustomThunk, meta = (CustomStructureParam = "Value", BlueprintInternalUseOnly = "true"))
 	static void BPGetResourceProperty(const FGameplayResource& Resource, FName PropertyName, int32& Value);

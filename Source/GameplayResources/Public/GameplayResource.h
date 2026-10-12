@@ -33,4 +33,13 @@ struct GAMEPLAYRESOURCES_API FGameplayResource
 
 	// Pushes this struct's Bag values into the subsystem for Key. Returns false when unavailable.
 	bool ExportToSubsystem(const UObject* WorldContext) const;
+
+	// True when Bag and OtherBag hold the same values. Properties are matched by ID, the same way
+	// SetResourceBag copies them, so a bag built against an older schema still compares by value. False when
+	// either side has a property the other lacks or stores as a different type.
+	bool HasEqualValues(const FInstancedPropertyBag& OtherBag) const;
+
+	// Same Key and HasEqualValues. Deliberately looser than reflection's Identical (no WithIdenticalViaEquality
+	// trait): that one also requires the same bag struct, and serialization relies on it for delta checks.
+	bool operator==(const FGameplayResource& Other) const;
 };

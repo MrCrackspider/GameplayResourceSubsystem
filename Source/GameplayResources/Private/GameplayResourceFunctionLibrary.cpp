@@ -16,6 +16,16 @@ bool UGameplayResourceFunctionLibrary::ExportGameplayResource(const UObject* Wor
 	return Resource.ExportToSubsystem(WorldContext);
 }
 
+bool UGameplayResourceFunctionLibrary::EqualEqual_GameplayResource(const FGameplayResource& A, const FGameplayResource& B)
+{
+	return A == B;
+}
+
+bool UGameplayResourceFunctionLibrary::NotEqual_GameplayResource(const FGameplayResource& A, const FGameplayResource& B)
+{
+	return A != B;
+}
+
 void UGameplayResourceFunctionLibrary::BPGetResourceProperty(const FGameplayResource& Resource, FName PropertyName, int32& Value)
 {
 	check(0);

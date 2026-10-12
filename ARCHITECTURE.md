@@ -51,9 +51,13 @@ has a `PackageRedirects` entry from `/Script/GameplayResourceSubsystemEditor` so
 | `IsResourceEqual(FGameplayResource)` | compares to the runtime value | none |
 
 Bag writes match properties **by ID** (`CopyMatchingValuesByID`), so a bag built against an older schema still
-writes the properties that survived. `IsResourceEqual` uses the same ID matching (fast path: whole-struct
-`Identical` when both bags share a `UPropertyBag`), but requires *exactly* the same property set, so a stale
-layout compares unequal. Unset key → `false`.
+writes the properties that survived. Comparison lives on the struct: `FGameplayResource::HasEqualValues(Bag)`
+uses the same ID matching (fast path: whole-struct `Identical` when both bags share a `UPropertyBag`), but
+requires *exactly* the same property set, so a stale layout compares unequal. `operator==` = same Key +
+`HasEqualValues`; Blueprint gets it as `Equal/Not Equal (Gameplay Resource)` (`==`/`!=`) in
+`UGameplayResourceFunctionLibrary`. `IsResourceEqual` = key set + `HasEqualValues` against the runtime bag.
+There is intentionally **no** `WithIdenticalViaEquality` trait: reflection's `Identical` (used by delta
+serialization and "differs from default") stays strict about the bag struct.
 
 `Changed` fires on every write, even when the value is identical. Deliberate (no compare cost on writes).
 
@@ -121,8 +125,9 @@ The Key dropdown is `FGameplayResourceGraphPanelPinFactory`: any `PC_Name` pin n
 
 **On Global Resource Changed**: event graphs only (`IsCompatibleWithGraph` → `GT_Ubergraph`).
 Pins: exec in, WorldContext (`self`), `Key`, `ChangeMask` (int bitmask over `EGameplayResourceChangeType`,
-default All) → `Then`, `Async Action` (for `Cancel`), `On Changed`, `ChangeType`, `Resource`
-(`FGameplayResource` snapshot), one output per schema property.
+default All) → `Then`, `Async Action` (for `Cancel`), `On Changed`, `ChangeType`, one output per schema
+property. The `FGameplayResource` snapshot is deliberately not exposed (removed 2026-10); the property pins read
+from the async node's internal `Resource` pin.
 
 Same pattern as `ObjectiveOrientedAI`'s `K2Node_AddObjectiveAndWait`: the runtime class is a
 `UCancellableAsyncAction` marked `meta = (HasDedicatedAsyncNode)` (so the stock async node isn't offered in the

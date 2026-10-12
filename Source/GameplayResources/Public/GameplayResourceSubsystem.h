@@ -64,10 +64,8 @@ public:
 	// Removes a key's runtime value and leaves it unset, even when the row is a default.
 	void ClearValue(FName Key);
 
-	// True when Resource.Key is currently set and its runtime value matches Resource.Bag. Properties are matched
-	// by ID, the same way SetResourceBag copies them, so a bag built against an older schema still compares by
-	// value. False when the key is unset, or when either side has a property the other lacks or stores as a
-	// different type.
+	// True when Resource.Key is currently set and its runtime value matches Resource.Bag, compared with
+	// FGameplayResource::HasEqualValues (by property ID). False when the key is unset.
 	bool IsResourceEqual(const FGameplayResource& Resource) const;
 
 	// BlueprintPure accessor used by the Get node's "Found" output pin.

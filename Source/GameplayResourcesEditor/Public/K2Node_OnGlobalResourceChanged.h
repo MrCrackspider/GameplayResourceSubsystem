@@ -45,6 +45,5 @@ protected:
 	UEdGraphPin* GetChangeMaskPin() const;
 	UEdGraphPin* GetOnChangedPin() const;
 	UEdGraphPin* GetChangeTypePin() const;
-	UEdGraphPin* GetResourcePin() const;
 	UEdGraphPin* GetAsyncActionPin() const;
 };

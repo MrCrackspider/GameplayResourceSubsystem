@@ -8,50 +8,6 @@
 using UE::GameplayResources::ArePropertiesLayoutCompatible;
 using UE::GameplayResources::UnresolvedLiteralStorageSize;
 
-namespace
-{
-	// Compares two bags value by value, matching properties by ID rather than by layout. Both bags must hold
-	// exactly the same set of properties, each with a layout-compatible type.
-	bool AreBagValuesIdentical(const FInstancedPropertyBag& BagA, const FInstancedPropertyBag& BagB)
-	{
-		const UPropertyBag* StructA = BagA.GetPropertyBagStruct();
-		const UPropertyBag* StructB = BagB.GetPropertyBagStruct();
-
-		// Same layout, including both empty: compare the whole struct in one go.
-		if (StructA == StructB)
-		{
-			return BagA.Identical(&BagB, PPF_None);
-		}
-
-		if (StructA == nullptr || StructB == nullptr || BagA.GetNumPropertiesInBag() != BagB.GetNumPropertiesInBag())
-		{
-			return false;
-		}
-
-		const uint8* BaseA = BagA.GetValue().GetMemory();
-		const uint8* BaseB = BagB.GetValue().GetMemory();
-
-		// IDs are unique within a bag, so equal counts plus every property of A found in B means the sets match.
-		for (const FPropertyBagPropertyDesc& DescA : StructA->GetPropertyDescs())
-		{
-			const FPropertyBagPropertyDesc* DescB = StructB->FindPropertyDescByID(DescA.ID);
-			if (DescB == nullptr || !ArePropertiesLayoutCompatible(DescA.CachedProperty, DescB->CachedProperty))
-			{
-				return false;
-			}
-
-			// Layout-compatible, so A's property can read both values.
-			const FProperty* Property = DescA.CachedProperty;
-			if (!Property->Identical(Property->ContainerPtrToValuePtr<void>(BaseA), DescB->CachedProperty->ContainerPtrToValuePtr<void>(BaseB), PPF_None))
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-}
-
 UGameplayResourceSubsystem* UGameplayResourceSubsystem::Get(const UObject* WorldContext)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull);
@@ -174,7 +130,7 @@ void UGameplayResourceSubsystem::ClearValue(FName Key)
 bool UGameplayResourceSubsystem::IsResourceEqual(const FGameplayResource& Resource) const
 {
 	const FInstancedPropertyBag* RuntimeBag = FindRuntimeBag(Resource.Key);
-	return RuntimeBag != nullptr && AreBagValuesIdentical(Resource.Bag, *RuntimeBag);
+	return RuntimeBag != nullptr && Resource.HasEqualValues(*RuntimeBag);
 }
 
 FDelegateHandle UGameplayResourceSubsystem::RegisterResourceChangeListener(const UObject* WorldContext, FName Key, EGameplayResourceChangeType ChangeMask, const FGameplayResourceChangeListener& Listener)
