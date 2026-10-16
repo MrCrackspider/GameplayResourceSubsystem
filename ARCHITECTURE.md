@@ -15,7 +15,7 @@ Modules:
 | Module | Type | Contents |
 |---|---|---|
 | `GameplayResources` (`Source/GameplayResources`) | Runtime | data model, subsystem, BP thunks, change-listener async action |
-| `GameplayResourcesEditor` (`Source/GameplayResourcesEditor`) | UncookedOnly | K2 nodes, Key dropdown pin factory, `FGameplayResource` details customization |
+| `GameplayResourcesEditor` (`Source/GameplayResourcesEditor`) | UncookedOnly | K2 nodes, Key dropdown pin factory, `FGameplayResource` / `FGameplayResourceValue` details customizations |
 
 The editor module used to be called `GameplayResourceSubsystemEditor`; `Config/DefaultEngine.ini` (project)
 has a `PackageRedirects` entry from `/Script/GameplayResourceSubsystemEditor` so old Blueprints still load.
@@ -35,6 +35,23 @@ has a `PackageRedirects` entry from `/Script/GameplayResourceSubsystemEditor` so
   `SyncBagToSchema()` reshapes the bag to the key's schema; `ImportFromSubsystem` / `ExportToSubsystem` copy
   to/from the runtime store. The details customization (`GameplayResourceCustomization.cpp`) reshapes `Bag`
   when `Key` changes.
+- **`FGameplayResourceValue`** (`GameplayResourceValue.h`): the same idea narrowed to one property: `Key` +
+  `ValueName` + `Value`, a bag holding exactly that one property. `SyncValueToSchema()` rebuilds `Value` from
+  the schema's desc for `ValueName`, **copied whole so the schema's property ID survives**. That ID is what
+  makes the single-property bag pay for itself: it is hashed into the bag layout, so every instance naming the
+  same schema property shares one cached `UPropertyBag` (bounded by the schema, not by instance count), and
+  `CopyMatchingValuesByID` matches it against the key's full bag at both ends — `ExportToSubsystem` is a
+  one-property write through the ordinary `SetResourceBag` path, leaving the key's other properties alone.
+  `HasEqualValue` / `operator==` mirror `FGameplayResource`'s, matching by ID.
+  - **Comparison** (groundwork for world conditions): `CompareWithSubsystem(WorldContext, EGameplayResourceComparison)`
+    evaluates `Current <op> Value` (runtime on the left, so it reads as authored: "Health >= 50");
+    `CompareWithBag` does the same against any bag, e.g. a change-listener snapshot. Returns
+    `TValueOrError<bool, EGameplayResourceComparisonError>` so "false" and "can't evaluate" (no subsystem, key
+    unset, property missing from an old runtime layout, struct out of sync, incomparable types) stay distinct.
+    Ordering: ints/enums/floats compare across each other by value (integers never go through `double`, mixed
+    signed/unsigned handled explicitly, NaN unordered), `String` case-sensitive, `Name` lexical, `Text`
+    culture-aware. Everything else — bool, struct, object, containers — gets `==`/`!=` only, via the property's
+    `Identical`. `SupportsComparison(Desc, Op)` exposes that rule for editor-time validation.
 - **`FGlobalResourceReference`**: just a key with the dropdown; for UPROPERTYs that name a resource.
 
 ## Runtime store: `UGameplayResourceSubsystem` (GameInstanceSubsystem)
@@ -123,6 +140,20 @@ pins must override it**. Subclasses:
 The Key dropdown is `FGameplayResourceGraphPanelPinFactory`: any `PC_Name` pin named `Key` on a
 `UK2Node_ResourceAccessorBase` gets an `SGraphPinDataTableRowName` over the settings DataTable.
 
+`FGameplayResourceValue` has **no K2 nodes yet** — it is C++ and details-panel only. Reading or writing it
+from Blueprint means adding wildcard thunks and a node pair the way `FGameplayResource` has them.
+
+### Details customizations
+
+`FGameplayResourceCustomizationBase` (`GameplayResourceCustomization.h`) holds what both struct
+customizations share: the header name widget, `GetNameValue` (an `FName` handle's value, `None` on a
+multi-select), `ReshapeBags` (apply a reshape to every raw bag behind a handle, bracketed by pre/post change)
+and `RequestRefresh`. `FGameplayResourceCustomization` reshapes `Bag` on Key change;
+`FGameplayResourceValueCustomization` additionally draws the **ValueName dropdown** —
+`PropertyCustomizationHelpers::MakePropertyComboBox` over `UGameplayResourcesDeveloperSettings::GetValueNames(Key)`,
+because the option list depends on a sibling property and `GetOptions` only reaches a static no-argument
+function. A Key change that invalidates `ValueName` clears it before reshaping.
+
 **On Global Resource Changed**: event graphs only (`IsCompatibleWithGraph` → `GT_Ubergraph`).
 Pins: exec in, WorldContext (`self`), `Key`, `ChangeMask` (int bitmask over `EGameplayResourceChangeType`,
 default All) → `Then`, `Async Action` (for `Cancel`), `On Changed`, `ChangeType`, one output per schema
@@ -166,6 +197,11 @@ Lifetime, and why it is the way it is:
 - `ResetGlobalResource` uses `WorldContext` meta (was misspelled `WorldContex` until 2026-10), so that pin is
   hidden/auto-filled.
 - `Changed` is not de-duplicated (see above). `IsResourceEqual` is available if a caller needs to filter.
+- `FGameplayResourceValue` reuses a schema property's **ID** in a different bag struct. Harmless today, but
+  `StructUtils.ValidatePropertyBagDescriptionEquality 1` makes `FPropertyBagPropertyDesc::operator==` `check`
+  that two same-ID descs also share a `CachedProperty`, which these two do not. Nothing in the copy path uses
+  that operator (it matches with `FindPropertyDescByID`), so the cvar is only a hazard if future code compares
+  descs directly.
 
 ## Repository / build notes
 

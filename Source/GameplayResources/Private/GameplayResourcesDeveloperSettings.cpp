@@ -18,6 +18,23 @@ TArray<FName> UGameplayResourcesDeveloperSettings::GetKeys()
 	return Table->GetRowNames();
 }
 
+TArray<FName> UGameplayResourcesDeveloperSettings::GetValueNames(FName Key)
+{
+	TArray<FName> ValueNames;
+
+	if (const UPropertyBag* Schema = FindResourceSchema(Key))
+	{
+		const TConstArrayView<FPropertyBagPropertyDesc> Descs = Schema->GetPropertyDescs();
+		ValueNames.Reserve(Descs.Num());
+		for (const FPropertyBagPropertyDesc& Desc : Descs)
+		{
+			ValueNames.Add(Desc.Name);
+		}
+	}
+
+	return ValueNames;
+}
+
 const FInstancedPropertyBag* UGameplayResourcesDeveloperSettings::FindResourceBag(FName Key)
 {
 	if (const UDataTable* DT = GetDataTable())

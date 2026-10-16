@@ -44,6 +44,11 @@ public:
 	UFUNCTION()
 	static TArray<FName> GetKeys();
 
+	// Names of the properties declared in Key's schema, in schema order. Unusable as a GetOptions target
+	// (that resolves to a static no-argument function); the FGameplayResourceValue customization calls it
+	// directly to fill the ValueName dropdown.
+	static TArray<FName> GetValueNames(FName Key);
+
 	// Schema (property bag layout) declared for a key, used to build node pins. Null if unknown.
 	static const UPropertyBag* FindResourceSchema(FName Key);
 

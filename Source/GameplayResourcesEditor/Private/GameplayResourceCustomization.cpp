@@ -7,19 +7,59 @@
 #include "PropertyHandle.h"
 #include "GameplayResource.h"
 #include "GameplayResourcesDeveloperSettings.h"
+#include "StructUtils/PropertyBag.h"
 
-TSharedRef<IPropertyTypeCustomization> FGameplayResourceCustomization::MakeInstance()
-{
-	return MakeShared<FGameplayResourceCustomization>();
-}
-
-void FGameplayResourceCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
+void FGameplayResourceCustomizationBase::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	HeaderRow
 		.NameContent()
 		[
 			PropertyHandle->CreatePropertyNameWidget()
 		];
+}
+
+FName FGameplayResourceCustomizationBase::GetNameValue(const TSharedPtr<IPropertyHandle>& Handle)
+{
+	FName Result = NAME_None;
+	if (Handle.IsValid() && Handle->GetValue(Result) != FPropertyAccess::Success)
+	{
+		return NAME_None;
+	}
+	return Result;
+}
+
+void FGameplayResourceCustomizationBase::ReshapeBags(const TSharedPtr<IPropertyHandle>& BagHandle, TFunctionRef<void(FInstancedPropertyBag&)> Reshape)
+{
+	if (!BagHandle.IsValid())
+	{
+		return;
+	}
+
+	TArray<void*> RawData;
+	BagHandle->AccessRawData(RawData);
+
+	BagHandle->NotifyPreChange();
+	for (void* Raw : RawData)
+	{
+		if (FInstancedPropertyBag* Bag = static_cast<FInstancedPropertyBag*>(Raw))
+		{
+			Reshape(*Bag);
+		}
+	}
+	BagHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+}
+
+void FGameplayResourceCustomizationBase::RequestRefresh() const
+{
+	if (PropertyUtilities.IsValid())
+	{
+		PropertyUtilities.Pin()->ForceRefresh();
+	}
+}
+
+TSharedRef<IPropertyTypeCustomization> FGameplayResourceCustomization::MakeInstance()
+{
+	return MakeShared<FGameplayResourceCustomization>();
 }
 
 void FGameplayResourceCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
@@ -43,39 +83,19 @@ void FGameplayResourceCustomization::CustomizeChildren(TSharedRef<IPropertyHandl
 
 void FGameplayResourceCustomization::OnKeyChanged()
 {
-	if (!KeyHandle.IsValid() || !BagHandle.IsValid())
+	const UPropertyBag* Schema = UGameplayResourcesDeveloperSettings::FindResourceSchema(GetNameValue(KeyHandle));
+
+	ReshapeBags(BagHandle, [Schema](FInstancedPropertyBag& Bag)
 	{
-		return;
-	}
-
-	FString KeyString;
-	KeyHandle->GetValueAsFormattedString(KeyString);
-	const FName Key(*KeyString);
-
-	const UPropertyBag* Schema = UGameplayResourcesDeveloperSettings::FindResourceSchema(Key);
-
-	TArray<void*> RawData;
-	BagHandle->AccessRawData(RawData);
-
-	BagHandle->NotifyPreChange();
-	for (void* Raw : RawData)
-	{
-		if (FInstancedPropertyBag* Bag = static_cast<FInstancedPropertyBag*>(Raw))
+		if (Schema)
 		{
-			if (Schema)
-			{
-				Bag->MigrateToNewBagStruct(Schema);
-			}
-			else
-			{
-				Bag->Reset();
-			}
+			Bag.MigrateToNewBagStruct(Schema);
 		}
-	}
-	BagHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+		else
+		{
+			Bag.Reset();
+		}
+	});
 
-	if (PropertyUtilities.IsValid())
-	{
-		PropertyUtilities.Pin()->ForceRefresh();
-	}
+	RequestRefresh();
 }
