@@ -205,11 +205,14 @@ Lifetime, and why it is the way it is:
 
 ## Repository / build notes
 
-- This folder is tracked by **two** git repos: the studio project repo (owner, internal GitLab) and a nested
-  personal repo (`.git` here, `github.com/MrCrackspider/GameplayResourceSubsystem`). Only the user's own code
-  may go to the personal repo; never push studio history there. Ask before touching the nested repo.
-- The nested repo's `.gitignore` (applies to the project repo too) whitelists by extension: only `.h/.cpp/
-  .cs/.uplugin/.md/...` are visible. New file types (e.g. `.ini`, `.png`) need a `!*.ext` line or `git add -f`.
+- This folder is its own git repo (`github.com/MrCrackspider/GameplayResourceSubsystem`), included in host
+  projects as a **submodule**: the host repo records only which commit of it to use, not its files. Commit
+  plugin changes here first, then commit the updated submodule pointer in the host. Ask before committing or
+  pushing here. If a host project is someone else's (a studio repo), none of its code or history goes into
+  this repo — only the plugin's own code.
+- This repo's `.gitignore` whitelists by extension: only `.h/.cpp/.cs/.uplugin/.md/...` are visible. New file
+  types (e.g. `.ini`, `.png`) need a `!*.ext` line or `git add -f`. It applies only inside this repo, not to
+  the host project.
 - Adding a UCLASS/USTRUCT/UENUM or changing reflected headers needs a full editor build (editor closed); with
   the editor open use `-SingleFile` compile checks (see project `CLAUDE.md`).
 - Renaming reflected types or modules: add `[CoreRedirects]` to the project's `Config/DefaultEngine.ini`.
